@@ -26,44 +26,37 @@ function Registro() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
-    
-    // Validar que las contraseñas coincidan
+
     if (formData.pass_user !== formData.confirmPassword) {
       setError("Las contraseñas no coinciden");
       return;
     }
 
-    // Validar longitud de contraseña
-    if (formData.pass_user.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
+    const password = formData.pass_user;
+
+    if (password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+
+    if (password.length > 72) {
+      setError("La contraseña no puede tener más de 72 caracteres");
+      return;
+    }
+
+    if (!/\d/.test(password)) {
+      setError("La contraseña debe incluir al menos un número");
+      return;
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]]/.test(password)) {
+      setError("La contraseña debe incluir al menos un caracter especial");
       return;
     }
 
     setLoading(true);
 
     try {
-const password = formData.pass_user;
-
-if (password.length < 8) {
-  setError("La contraseña debe tener al menos 8 caracteres");
-  return;
-}
-
-if (password.length > 72) {
-  setError("La contraseña no puede tener más de 72 caracteres");
-  return;
-}
-
-if (!/\d/.test(password)) {
-  setError("La contraseña debe incluir al menos un número");
-  return;
-}
-
-if (!/[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]]/.test(password)) {
-  setError("La contraseña debe incluir al menos un caracter especial");
-  return;
-}
-
       const response = await fetch("http://localhost:8000/register", {
         method: "POST",
         headers: {
@@ -74,18 +67,18 @@ if (!/[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]]/.test(password)) {
           email_user: formData.email_user,
           pass_user: formData.pass_user,
           matricula_user: parseInt(formData.matricula_user),
-          id_rol: 2 // Siempre será Usuario
+          id_rol: 2
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-      alert("Registro exitoso. Ahora puedes iniciar sesión.");
-  navigate("/");
-} else {
-  setError(data.detail || data.message || "Error al registrarse");
-}
+        alert("Registro exitoso. Ahora puedes iniciar sesión.");
+        navigate("/");
+      } else {
+        setError(data.detail || data.message || "Error al registrarse");
+      }
     } catch (error) {
       console.error("Error de conexión:", error);
       setError("No se pudo conectar con el servidor. Verifica que el backend esté corriendo.");
@@ -183,7 +176,7 @@ if (!/[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]]/.test(password)) {
               value={formData.pass_user}
               onChange={handleChange}
               required
-              minLength={6}
+              minLength={8}
               disabled={loading}
             />
           </div>
@@ -201,7 +194,7 @@ if (!/[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]]/.test(password)) {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              minLength={6}
+              minLength={8}
               disabled={loading}
             />
           </div>

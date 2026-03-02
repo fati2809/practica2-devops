@@ -30,7 +30,7 @@ function Login() {
 
       if (response.ok && data.success) {
         // Verificar que el usuario sea Administrador
-        if (data.user.rol !== "Admin") {
+        if (data.user.rol !== "Administrador") {
           setError("Acceso denegado. Solo los administradores pueden iniciar sesión.");
           setLoading(false);
           return;
@@ -83,7 +83,7 @@ function Login() {
 
           <div className="form-group">
             <label htmlFor="email" className="form-label">
-              Usuario
+              Correo
             </label>
             <input
               type="email"
