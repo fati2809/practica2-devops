@@ -1,96 +1,62 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import "./Eventos.css";
-
-interface Evento {
-  id_event: number;
-  name_event: string;
-  id_building: number;
-  timedate_event: string;
-  status_event: number;
-  id_profe: number;
-  id_user: number;
-}
+import "./Usuarios.css"; // reutiliza el mismo CSS
 
 interface Edificio {
   id_building: number;
   name_building: string;
+  code_building: string | null;
+  imagen_url: string | null;
+  lat_building: number;
+  lon_building: number;
+  id_div: number | null;
+  name_div: string | null;
 }
 
-interface Profesor {
-  id_profe: number;
-  nombre_profe: string;
+interface Division {
+  id_div: number;
+  name_div: string;
 }
 
-interface Usuario {
-  id_user: number;
-  name_user: string;
-}
-
-function Eventos() {
+function Edificios() {
   const navigate = useNavigate();
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [eventosData, setEventosData] = useState<Evento[]>([]);
-  const [edificios, setEdificios] = useState<Edificio[]>([]);
-  const [profesores, setProfesores] = useState<Profesor[]>([]);
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [edificiosData, setEdificiosData] = useState<Edificio[]>([]);
+  const [divisiones, setDivisiones] = useState<Division[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
-    name_event: "",
-    id_building: "",
-    timedate_event: "",
-    id_profe: "",
-    id_user: "",
+    name_building: "", code_building: "", imagen_url: "",
+    lat_building: "", lon_building: "", id_div: ""
   });
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
-    id_event: 0,
-    name_event: "",
-    id_building: "",
-    timedate_event: "",
-    id_profe: "",
-    id_user: "",
+    id_building: 0, name_building: "", code_building: "",
+    imagen_url: "", lat_building: "", lon_building: "", id_div: ""
   });
 
   const [modalError, setModalError] = useState("");
 
-  const fetchEventos = () => {
-    fetch("http://localhost:8000/eventos")
-      .then((res) => res.json())
-      .then((data) => { setEventosData(data); setLoading(false); })
-      .catch((err) => { console.error(err); setLoading(false); });
-  };
-
   const fetchEdificios = () => {
     fetch("http://localhost:8000/edificios")
-      .then((res) => res.json())
-      .then((data) => setEdificios(data))
-      .catch((err) => console.error(err));
+      .then(res => res.json())
+      .then(data => { setEdificiosData(data); setLoading(false); })
+      .catch(err => { console.error(err); setLoading(false); });
   };
 
-  const fetchProfesores = () => {
-    fetch("http://localhost:8000/profesores")
-      .then((res) => res.json())
-      .then((data) => setProfesores(data))
-      .catch((err) => console.error(err));
-  };
-
-  const fetchUsuarios = () => {
-    fetch("http://localhost:8000/usuarios")
-      .then((res) => res.json())
-      .then((data) => setUsuarios(data))
-      .catch((err) => console.error(err));
+  const fetchDivisiones = () => {
+    fetch("http://localhost:8000/divisiones")
+      .then(res => res.json())
+      .then(data => setDivisiones(data))
+      .catch(err => console.error(err));
   };
 
   useEffect(() => {
-    fetchEventos();
     fetchEdificios();
-    fetchProfesores();
-    fetchUsuarios();
+    fetchDivisiones();
   }, []);
 
   const handleLogout = () => {
@@ -100,55 +66,49 @@ function Eventos() {
     navigate("/", { replace: true });
   };
 
-  const filteredEventos = eventosData.filter((e) =>
-    e.name_event.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEdificios = edificiosData.filter(e =>
+    e.name_building.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (e.code_building ?? "").toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const getNombreEdificio = (id: number) =>
-    edificios.find((e) => e.id_building === id)?.name_building ?? `Edificio ${id}`;
-
-  const getNombreProfesor = (id: number) =>
-    profesores.find((p) => p.id_profe === id)?.nombre_profe ?? `Profesor ${id}`;
-
-  const getNombreUsuario = (id: number) =>
-    usuarios.find((u) => u.id_user === id)?.name_user ?? `Usuario ${id}`;
 
   const handleAddSubmit = async () => {
     setModalError("");
     try {
-      const res = await fetch("http://localhost:8000/eventos", {
+      const res = await fetch("http://localhost:8000/edificios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name_event: addForm.name_event,
-          id_building: parseInt(addForm.id_building),
-          timedate_event: addForm.timedate_event,
-          id_profe: parseInt(addForm.id_profe),
-          id_user: parseInt(addForm.id_user),
+          name_building: addForm.name_building,
+          code_building: addForm.code_building || null,
+          imagen_url: addForm.imagen_url || null,
+          lat_building: parseFloat(addForm.lat_building),
+          lon_building: parseFloat(addForm.lon_building),
+          id_div: addForm.id_div ? parseInt(addForm.id_div) : null,
         }),
       });
       const data = await res.json();
       if (res.ok) {
         setShowAddModal(false);
-        setAddForm({ name_event: "", id_building: "", timedate_event: "", id_profe: "", id_user: "" });
-        fetchEventos();
+        setAddForm({ name_building: "", code_building: "", imagen_url: "", lat_building: "", lon_building: "", id_div: "" });
+        fetchEdificios();
       } else {
-        setModalError(data.detail || "Error al agregar evento");
+        setModalError(data.detail || "Error al agregar edificio");
       }
     } catch {
       setModalError("No se pudo conectar con el servidor");
     }
   };
 
-  const openEditModal = (evento: Evento) => {
+  const openEditModal = (e: Edificio) => {
     setModalError("");
     setEditForm({
-      id_event: evento.id_event,
-      name_event: evento.name_event,
-      id_building: String(evento.id_building),
-      timedate_event: evento.timedate_event.replace(" ", "T").substring(0, 16),
-      id_profe: String(evento.id_profe),
-      id_user: String(evento.id_user),
+      id_building: e.id_building,
+      name_building: e.name_building,
+      code_building: e.code_building ?? "",
+      imagen_url: e.imagen_url ?? "",
+      lat_building: String(e.lat_building),
+      lon_building: String(e.lon_building),
+      id_div: e.id_div ? String(e.id_div) : "",
     });
     setShowEditModal(true);
   };
@@ -156,69 +116,66 @@ function Eventos() {
   const handleEditSubmit = async () => {
     setModalError("");
     try {
-      const res = await fetch(`http://localhost:8000/eventos/${editForm.id_event}`, {
+      const res = await fetch(`http://localhost:8000/edificios/${editForm.id_building}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name_event: editForm.name_event,
-          id_building: parseInt(editForm.id_building),
-          timedate_event: editForm.timedate_event,
-          id_profe: parseInt(editForm.id_profe),
-          id_user: parseInt(editForm.id_user),
+          name_building: editForm.name_building,
+          code_building: editForm.code_building || null,
+          imagen_url: editForm.imagen_url || null,
+          lat_building: parseFloat(editForm.lat_building),
+          lon_building: parseFloat(editForm.lon_building),
+          id_div: editForm.id_div ? parseInt(editForm.id_div) : null,
         }),
       });
       const data = await res.json();
       if (res.ok) {
         setShowEditModal(false);
-        fetchEventos();
+        fetchEdificios();
       } else {
-        setModalError(data.detail || "Error al editar evento");
+        setModalError(data.detail || "Error al editar edificio");
       }
     } catch {
       setModalError("No se pudo conectar con el servidor");
     }
   };
 
-  const handleDelete = async (id_event: number, name_event: string) => {
-    if (!window.confirm(`¿Eliminar el evento "${name_event}"?`)) return;
+  const handleDelete = async (id_building: number, name: string) => {
+    if (!window.confirm(`¿Eliminar el edificio "${name}"?`)) return;
     try {
-      const res = await fetch(`http://localhost:8000/eventos/${id_event}`, { method: "DELETE" });
-      if (res.ok) fetchEventos();
-      else alert("Error al eliminar el evento");
+      const res = await fetch(`http://localhost:8000/edificios/${id_building}`, { method: "DELETE" });
+      if (res.ok) fetchEdificios();
+      else alert("Error al eliminar el edificio");
     } catch {
       alert("No se pudo conectar con el servidor");
-    }
-  };
-
-  const handleToggleStatus = async (evento: Evento) => {
-    try {
-      const res = await fetch(`http://localhost:8000/eventos/${evento.id_event}/toggle-status`, { method: "PATCH" });
-      if (res.ok) fetchEventos();
-    } catch {
-      console.error("Error cambiando estado");
     }
   };
 
   const modalStyle: React.CSSProperties = {
     position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
     backgroundColor: "rgba(0,0,0,0.5)", display: "flex",
-    alignItems: "center", justifyContent: "center", zIndex: 1000,
+    alignItems: "center", justifyContent: "center", zIndex: 1000
   };
 
   const cardStyle: React.CSSProperties = {
     background: "#fff", borderRadius: "12px", padding: "32px",
     width: "420px", display: "flex", flexDirection: "column", gap: "16px",
+    maxHeight: "90vh", overflowY: "auto"
   };
 
   const inputStyle: React.CSSProperties = {
     width: "100%", padding: "10px 12px", borderRadius: "8px",
-    border: "1px solid #d1d5db", fontSize: "14px", boxSizing: "border-box",
+    border: "1px solid #d1d5db", fontSize: "14px", boxSizing: "border-box"
   };
 
   const selectStyle: React.CSSProperties = { ...inputStyle };
 
+  const labelStyle: React.CSSProperties = {
+    fontSize: "12px", fontWeight: 600, color: "#6b7280", marginBottom: "-8px"
+  };
+
   return (
-    <div className="eventos-container">
+    <div className="usuarios-container">
       <aside className="sidebar">
         <nav className="sidebar-nav">
           <button className="nav-item" onClick={() => navigate("/dashboard")}>
@@ -243,7 +200,7 @@ function Eventos() {
             <span className="nav-text">Usuarios</span>
           </button>
 
-          <button className="nav-item active" onClick={() => navigate("/eventos")}>
+          <button className="nav-item" onClick={() => navigate("/eventos")}>
             <span className="nav-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -254,17 +211,17 @@ function Eventos() {
             <span className="nav-text">Eventos</span>
           </button>
 
-          <button className="nav-item" onClick={() => navigate("/edificios")}>
-  <span className="nav-icon">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="3" width="18" height="18" rx="2"/>
-      <path d="M9 22V12h6v10"/>
-      <path d="M3 9h18"/>
-    </svg>
-  </span>
-  <span className="nav-text">Edificios</span>
-</button>
-<button className="nav-item" onClick={() => navigate("/divisiones")}>
+          <button className="nav-item active" onClick={() => navigate("/edificios")}>
+            <span className="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M9 22V12h6v10"/>
+                <path d="M3 9h18"/>
+              </svg>
+            </span>
+            <span className="nav-text">Edificios</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate("/divisiones")}>
   <span className="nav-icon">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M3 3h7v7H3z"/>
@@ -306,13 +263,13 @@ function Eventos() {
         <div className="top-nav">
           <span className="top-nav-text inactive">Dashboards</span>
           <span className="top-nav-separator">/</span>
-          <span className="top-nav-text active">Eventos</span>
+          <span className="top-nav-text active">Edificios</span>
         </div>
 
         <div className="content-card">
           <div className="content-header">
             <div className="header-left">
-              <h2 className="content-title">Eventos</h2>
+              <h2 className="content-title">Edificios</h2>
               <button className="btn-primary" onClick={() => { setModalError(""); setShowAddModal(true); }}>
                 Agregar
               </button>
@@ -324,7 +281,7 @@ function Eventos() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Buscar evento por nombre"
+                  placeholder="Buscar por nombre o código"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
@@ -335,53 +292,48 @@ function Eventos() {
 
           <div className="table-container">
             {loading ? (
-              <p style={{ padding: "20px", textAlign: "center" }}>Cargando eventos...</p>
+              <p style={{ padding: "20px", textAlign: "center" }}>Cargando edificios...</p>
             ) : (
               <table className="data-table">
                 <thead>
                   <tr>
                     <th>Nombre</th>
-                    <th>Edificio</th>
-                    <th>Fecha y Hora</th>
-                    <th>Profesor</th>
-                    <th>Usuario</th>
-                    <th>Status</th>
+                    <th>Código</th>
+                    <th>División</th>
+                    <th>Latitud</th>
+                    <th>Longitud</th>
+                    <th>Imagen</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredEventos.map((evento) => (
-                    <tr key={evento.id_event}>
-                      <td className="cell-name">{evento.name_event}</td>
-                      <td>{getNombreEdificio(evento.id_building)}</td>
-                      <td>{evento.timedate_event}</td>
-                      <td>{getNombreProfesor(evento.id_profe)}</td>
-                      <td>{getNombreUsuario(evento.id_user)}</td>
+                  {filteredEdificios.map((ed) => (
+                    <tr key={ed.id_building}>
+                      <td className="cell-name">{ed.name_building}</td>
+                      <td>{ed.code_building ?? "—"}</td>
+                      <td>{ed.name_div ?? "—"}</td>
+                      <td>{ed.lat_building}</td>
+                      <td>{ed.lon_building}</td>
                       <td>
-                        <span className={`status-badge ${evento.status_event === 0 ? "status-inactive" : "status-active"}`}>
-                          {evento.status_event === 0 ? "Inactivo" : "Activo"}
-                        </span>
+                        {ed.imagen_url ? (
+                          <img
+                            src={ed.imagen_url}
+                            alt={ed.name_building}
+                            style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "6px" }}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          />
+                        ) : "—"}
                       </td>
                       <td className="cell-actions">
-                        <button className="action-btn" title="Editar" onClick={() => openEditModal(evento)}>
+                        <button className="action-btn" title="Editar" onClick={() => openEditModal(ed)}>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                           </svg>
                         </button>
-                        <button
-                          className={`action-btn ${evento.status_event === 0 ? "action-btn-disabled" : ""}`}
-                          title="Toggle Status"
-                          onClick={() => handleToggleStatus(evento)}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="1" y="5" width="22" height="14" rx="7" ry="7"/>
-                            <circle cx={evento.status_event === 0 ? "8" : "16"} cy="12" r="3"/>
-                          </svg>
-                        </button>
                         <button className="action-btn" title="Eliminar"
                           style={{ color: "#dc2626" }}
-                          onClick={() => handleDelete(evento.id_event, evento.name_event)}>
+                          onClick={() => handleDelete(ed.id_building, ed.name_building)}>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="3 6 5 6 21 6"/>
                             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -407,43 +359,40 @@ function Eventos() {
       {showAddModal && (
         <div style={modalStyle} onClick={() => setShowAddModal(false)}>
           <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: 0, fontSize: "18px" }}>Agregar Evento</h3>
-
+            <h3 style={{ margin: 0, fontSize: "18px" }}>Agregar Edificio</h3>
             {modalError && (
               <div style={{ padding: "10px", backgroundColor: "#fee2e2", color: "#dc2626", borderRadius: "8px", fontSize: "13px" }}>
                 {modalError}
               </div>
             )}
+            <span style={labelStyle}>Nombre</span>
+            <input style={inputStyle} placeholder="Nombre del edificio" value={addForm.name_building}
+              onChange={(e) => setAddForm(p => ({ ...p, name_building: e.target.value }))} />
 
-            <input style={inputStyle} placeholder="Nombre del evento" value={addForm.name_event}
-              onChange={(e) => setAddForm(p => ({ ...p, name_event: e.target.value }))} />
+            <span style={labelStyle}>Código</span>
+            <input style={inputStyle} placeholder="Ej: ED-01" value={addForm.code_building}
+              onChange={(e) => setAddForm(p => ({ ...p, code_building: e.target.value }))} />
 
-            <select style={selectStyle} value={addForm.id_building}
-              onChange={(e) => setAddForm(p => ({ ...p, id_building: e.target.value }))}>
-              <option value="">Seleccionar edificio</option>
-              {edificios.map((ed) => (
-                <option key={ed.id_building} value={ed.id_building}>{ed.name_building}</option>
+            <span style={labelStyle}>División</span>
+            <select style={selectStyle} value={addForm.id_div}
+              onChange={(e) => setAddForm(p => ({ ...p, id_div: e.target.value }))}>
+              <option value="">Seleccionar división</option>
+              {divisiones.map(d => (
+                <option key={d.id_div} value={d.id_div}>{d.name_div}</option>
               ))}
             </select>
 
-            <input style={inputStyle} type="datetime-local" value={addForm.timedate_event}
-              onChange={(e) => setAddForm(p => ({ ...p, timedate_event: e.target.value }))} />
+            <span style={labelStyle}>Latitud</span>
+            <input style={inputStyle} placeholder="Ej: 20.5888" type="number" step="any" value={addForm.lat_building}
+              onChange={(e) => setAddForm(p => ({ ...p, lat_building: e.target.value }))} />
 
-            <select style={selectStyle} value={addForm.id_profe}
-              onChange={(e) => setAddForm(p => ({ ...p, id_profe: e.target.value }))}>
-              <option value="">Seleccionar profesor</option>
-              {profesores.map((pr) => (
-                <option key={pr.id_profe} value={pr.id_profe}>{pr.nombre_profe}</option>
-              ))}
-            </select>
+            <span style={labelStyle}>Longitud</span>
+            <input style={inputStyle} placeholder="Ej: -100.3899" type="number" step="any" value={addForm.lon_building}
+              onChange={(e) => setAddForm(p => ({ ...p, lon_building: e.target.value }))} />
 
-            <select style={selectStyle} value={addForm.id_user}
-              onChange={(e) => setAddForm(p => ({ ...p, id_user: e.target.value }))}>
-              <option value="">Seleccionar usuario</option>
-              {usuarios.map((u) => (
-                <option key={u.id_user} value={u.id_user}>{u.name_user}</option>
-              ))}
-            </select>
+            <span style={labelStyle}>URL de imagen</span>
+            <input style={inputStyle} placeholder="https://..." value={addForm.imagen_url}
+              onChange={(e) => setAddForm(p => ({ ...p, imagen_url: e.target.value }))} />
 
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
               <button className="btn-filter" onClick={() => setShowAddModal(false)}>Cancelar</button>
@@ -457,43 +406,40 @@ function Eventos() {
       {showEditModal && (
         <div style={modalStyle} onClick={() => setShowEditModal(false)}>
           <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: 0, fontSize: "18px" }}>Editar Evento</h3>
-
+            <h3 style={{ margin: 0, fontSize: "18px" }}>Editar Edificio</h3>
             {modalError && (
               <div style={{ padding: "10px", backgroundColor: "#fee2e2", color: "#dc2626", borderRadius: "8px", fontSize: "13px" }}>
                 {modalError}
               </div>
             )}
+            <span style={labelStyle}>Nombre</span>
+            <input style={inputStyle} placeholder="Nombre del edificio" value={editForm.name_building}
+              onChange={(e) => setEditForm(p => ({ ...p, name_building: e.target.value }))} />
 
-            <input style={inputStyle} placeholder="Nombre del evento" value={editForm.name_event}
-              onChange={(e) => setEditForm(p => ({ ...p, name_event: e.target.value }))} />
+            <span style={labelStyle}>Código</span>
+            <input style={inputStyle} placeholder="Ej: ED-01" value={editForm.code_building}
+              onChange={(e) => setEditForm(p => ({ ...p, code_building: e.target.value }))} />
 
-            <select style={selectStyle} value={editForm.id_building}
-              onChange={(e) => setEditForm(p => ({ ...p, id_building: e.target.value }))}>
-              <option value="">Seleccionar edificio</option>
-              {edificios.map((ed) => (
-                <option key={ed.id_building} value={ed.id_building}>{ed.name_building}</option>
+            <span style={labelStyle}>División</span>
+            <select style={selectStyle} value={editForm.id_div}
+              onChange={(e) => setEditForm(p => ({ ...p, id_div: e.target.value }))}>
+              <option value="">Seleccionar división</option>
+              {divisiones.map(d => (
+                <option key={d.id_div} value={d.id_div}>{d.name_div}</option>
               ))}
             </select>
 
-            <input style={inputStyle} type="datetime-local" value={editForm.timedate_event}
-              onChange={(e) => setEditForm(p => ({ ...p, timedate_event: e.target.value }))} />
+            <span style={labelStyle}>Latitud</span>
+            <input style={inputStyle} placeholder="Ej: 20.5888" type="number" step="any" value={editForm.lat_building}
+              onChange={(e) => setEditForm(p => ({ ...p, lat_building: e.target.value }))} />
 
-            <select style={selectStyle} value={editForm.id_profe}
-              onChange={(e) => setEditForm(p => ({ ...p, id_profe: e.target.value }))}>
-              <option value="">Seleccionar profesor</option>
-              {profesores.map((pr) => (
-                <option key={pr.id_profe} value={pr.id_profe}>{pr.nombre_profe}</option>
-              ))}
-            </select>
+            <span style={labelStyle}>Longitud</span>
+            <input style={inputStyle} placeholder="Ej: -100.3899" type="number" step="any" value={editForm.lon_building}
+              onChange={(e) => setEditForm(p => ({ ...p, lon_building: e.target.value }))} />
 
-            <select style={selectStyle} value={editForm.id_user}
-              onChange={(e) => setEditForm(p => ({ ...p, id_user: e.target.value }))}>
-              <option value="">Seleccionar usuario</option>
-              {usuarios.map((u) => (
-                <option key={u.id_user} value={u.id_user}>{u.name_user}</option>
-              ))}
-            </select>
+            <span style={labelStyle}>URL de imagen</span>
+            <input style={inputStyle} placeholder="https://..." value={editForm.imagen_url}
+              onChange={(e) => setEditForm(p => ({ ...p, imagen_url: e.target.value }))} />
 
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
               <button className="btn-filter" onClick={() => setShowEditModal(false)}>Cancelar</button>
@@ -506,4 +452,4 @@ function Eventos() {
   );
 }
 
-export default Eventos;
+export default Edificios;

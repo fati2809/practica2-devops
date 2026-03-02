@@ -5,7 +5,10 @@ import Dashboard from "./pages/Dashboard";
 import Eventos from "./pages/Eventos";
 import Usuarios from "./pages/Usuarios";
 import Reportes from "./pages/Reportes";
+import Edificios from "./pages/Edificios";  // ✅ Agregar'
+import Divisiones from "./pages/Divisiones"; 
 import ProtectedRoute from "./ProtectedRoute";
+
 
 function App() {
   return (
@@ -48,7 +51,24 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/edificios" 
+          element={
+            <ProtectedRoute>
+              <Edificios />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/divisiones" 
+          element={
+            <ProtectedRoute>
+              <Divisiones />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
+      
     </BrowserRouter>
   );
 }
