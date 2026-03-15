@@ -75,5 +75,25 @@ VALUES
 
 ALTER TABLE usuarios ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
-Iniciar
-npm run dev
+
+ALTER TABLE edificios 
+ADD capacidad INT NOT NULL DEFAULT 0;
+
+ALTER TABLE eventos 
+ADD capacidad_event INT NOT NULL DEFAULT 0,
+ADD prioridad_event INT NOT NULL DEFAULT 1;
+
+ALTER TABLE edificios
+  ADD COLUMN capacidad_planta_baja INT NOT NULL DEFAULT 0,
+  ADD COLUMN capacidad_planta_alta INT NOT NULL DEFAULT 0;
+
+-- Migrar el valor de 'capacidad' que ya tenías a planta baja
+UPDATE edificios SET capacidad_planta_baja = capacidad WHERE capacidad > 0;
+
+-- Quitar la columna genérica
+ALTER TABLE edificios DROP COLUMN capacidad;
+
+ALTER TABLE eventos ADD COLUMN planta_event ENUM('baja', 'alta') NOT NULL DEFAULT 'baja';
+
+ALTER TABLE eventos 
+ADD COLUMN timedate_end_event TIMESTAMP NULL;

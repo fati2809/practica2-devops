@@ -52,8 +52,14 @@ function Usuarios() {
   });
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState<ModalData & { id_user: number }>({
-    id_user: 0, name_user: "", email_user: "", matricula_user: "", id_rol: 2
+  const [editForm, setEditForm] = useState<ModalData & {
+    id_user: number;
+    id_division: string;
+    planta_profe: string;
+    id_building: string;
+  }>({
+    id_user: 0, name_user: "", email_user: "", matricula_user: "", id_rol: 2,
+    id_division: "", planta_profe: "", id_building: ""
   });
 
   const [modalError, setModalError] = useState("");
@@ -149,7 +155,10 @@ function Usuarios() {
       name_user: usuario.name_user,
       email_user: usuario.email_user,
       matricula_user: String(usuario.matricula_user ?? ""),
-      id_rol: usuario.id_rol
+      id_rol: usuario.id_rol,
+      id_division: divisiones.find(d => d.name_div === usuario.division)?.id_div?.toString() ?? "",
+      planta_profe: usuario.planta ?? "",
+      id_building: edificios.find(e => e.name_building === usuario.edificio)?.id_building?.toString() ?? "",
     });
     setShowEditModal(true);
   };
@@ -164,7 +173,12 @@ function Usuarios() {
           name_user: editForm.name_user,
           email_user: editForm.email_user,
           matricula_user: parseInt(editForm.matricula_user),
-          id_rol: editForm.id_rol
+          id_rol: editForm.id_rol,
+          ...(editForm.id_rol === 3 && {
+            id_division: editForm.id_division ? parseInt(editForm.id_division) : null,
+            planta_profe: editForm.planta_profe || null,
+            id_building: editForm.id_building ? parseInt(editForm.id_building) : null,
+          })
         })
       });
       const data = await res.json();
@@ -254,28 +268,29 @@ function Usuarios() {
             </span>
             <span className="nav-text">Eventos</span>
           </button>
-          
-<button className="nav-item" onClick={() => navigate("/edificios")}>
-  <span className="nav-icon">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="3" width="18" height="18" rx="2"/>
-      <path d="M9 22V12h6v10"/>
-      <path d="M3 9h18"/>
-    </svg>
-  </span>
-  <span className="nav-text">Edificios</span>
-</button>
-<button className="nav-item" onClick={() => navigate("/divisiones")}>
-  <span className="nav-icon">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M3 3h7v7H3z"/>
-      <path d="M14 3h7v7h-7z"/>
-      <path d="M3 14h7v7H3z"/>
-      <path d="M14 14h7v7h-7z"/>
-    </svg>
-  </span>
-  <span className="nav-text">Divisiones</span>
-</button>
+
+          <button className="nav-item" onClick={() => navigate("/edificios")}>
+            <span className="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M9 22V12h6v10"/>
+                <path d="M3 9h18"/>
+              </svg>
+            </span>
+            <span className="nav-text">Edificios</span>
+          </button>
+
+          <button className="nav-item" onClick={() => navigate("/divisiones")}>
+            <span className="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3h7v7H3z"/>
+                <path d="M14 3h7v7h-7z"/>
+                <path d="M3 14h7v7H3z"/>
+                <path d="M14 14h7v7h-7z"/>
+              </svg>
+            </span>
+            <span className="nav-text">Divisiones</span>
+          </button>
         </nav>
 
         <div className="sidebar-footer">
@@ -346,7 +361,7 @@ function Usuarios() {
                     <th>Matrícula</th>
                     <th>Rol</th>
                     <th>División</th>
-                    <th>Planta</th>
+                    <th>Planta/Cubículo </th>
                     <th>Edificio</th>
                     <th></th>
                   </tr>
@@ -476,18 +491,53 @@ function Usuarios() {
               </div>
             )}
 
+            <span style={labelStyle}>Nombre completo</span>
             <input style={inputStyle} placeholder="Nombre completo" value={editForm.name_user}
               onChange={(e) => setEditForm(p => ({ ...p, name_user: e.target.value }))} />
+
+            <span style={labelStyle}>Email</span>
             <input style={inputStyle} placeholder="Email" type="email" value={editForm.email_user}
               onChange={(e) => setEditForm(p => ({ ...p, email_user: e.target.value }))} />
+
+            <span style={labelStyle}>Matrícula</span>
             <input style={inputStyle} placeholder="Matrícula" type="number" value={editForm.matricula_user}
               onChange={(e) => setEditForm(p => ({ ...p, matricula_user: e.target.value }))} />
+
+            <span style={labelStyle}>Rol</span>
             <select style={selectStyle} value={editForm.id_rol}
               onChange={(e) => setEditForm(p => ({ ...p, id_rol: parseInt(e.target.value) }))}>
               <option value={1}>Administrador</option>
               <option value={2}>Usuario</option>
               <option value={3}>Profesor</option>
             </select>
+
+            {editForm.id_rol === 3 && (
+              <>
+                <div style={dividerStyle}>Datos del Profesor</div>
+
+                <span style={labelStyle}>División</span>
+                <select style={selectStyle} value={editForm.id_division}
+                  onChange={(e) => setEditForm(p => ({ ...p, id_division: e.target.value }))}>
+                  <option value="">Seleccionar división</option>
+                  {divisiones.map(d => (
+                    <option key={d.id_div} value={d.id_div}>{d.name_div}</option>
+                  ))}
+                </select>
+
+                <span style={labelStyle}>Planta</span>
+                <input style={inputStyle} placeholder="Ej: Planta Baja" value={editForm.planta_profe}
+                  onChange={(e) => setEditForm(p => ({ ...p, planta_profe: e.target.value }))} />
+
+                <span style={labelStyle}>Edificio</span>
+                <select style={selectStyle} value={editForm.id_building}
+                  onChange={(e) => setEditForm(p => ({ ...p, id_building: e.target.value }))}>
+                  <option value="">Seleccionar edificio</option>
+                  {edificios.map(ed => (
+                    <option key={ed.id_building} value={ed.id_building}>{ed.name_building}</option>
+                  ))}
+                </select>
+              </>
+            )}
 
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
               <button className="btn-filter" onClick={() => setShowEditModal(false)}>Cancelar</button>
