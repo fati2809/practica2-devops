@@ -44,23 +44,24 @@ jobs:
       - name: Build del proyecto
         run: npm run build || true
 
-      - name: Iniciar app en background
+      - name: Instalar K6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6 -y
+
+      - name: Iniciar app y ejecutar K6
         run: |
           node server.js &
-          echo $! > server.pid
+          SERVER_PID=$!
           sleep 10
           curl -f http://localhost:3000/health || exit 1
-
-      - name: Ejecutar prueba K6
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: tests/load-test.js
-        env:
-          APP_URL: http://localhost:3000
-
-      - name: Detener servidor
-        if: always()
-        run: kill $(cat server.pid) 2>/dev/null || true
+          k6 run --env APP_URL=http://localhost:3000 tests/load-test.js
+          EXIT_CODE=$?
+          kill $SERVER_PID 2>/dev/null || true
+          exit $EXIT_CODE
 
   docker-build:
     name: "3 · Empaquetar con Docker"
