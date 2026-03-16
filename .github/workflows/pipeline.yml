@@ -111,7 +111,7 @@ jobs:
             docker run -d \
               --name practica2-devops \
               --restart unless-stopped \
-              -p 80:3000 \
+              -p 3000:3000 \
               ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
             sleep 5
