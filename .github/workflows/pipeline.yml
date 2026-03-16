@@ -27,7 +27,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
-            -Dsonar.projectKey=mi-proyecto-devops
+            -Dsonar.projectKey=practica-devops0
             -Dsonar.qualitygate.wait=true
 
   k6-load-test:
