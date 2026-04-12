@@ -1,10 +1,7 @@
 name: Pipeline CI/CD Completo
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+   workflow_dispatch:
 
 env:
   IMAGE_NAME: ghcr.io/fati2809/practica2-devops
