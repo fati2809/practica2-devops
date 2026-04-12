@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -13,21 +14,12 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v3
 
-      - name: Copiar archivos al VPS
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "nginx/"
-          target: "/opt/blue-green/"
-
-      - name: Ejecutar deploy en VPS
+      - name: Test conexión SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            chmod +x /opt/blue-green/nginx/deploy.sh
-            sudo /opt/blue-green/nginx/deploy.sh
+          port: 22
+          debug: true
+          script: echo "Conexión exitosa"
